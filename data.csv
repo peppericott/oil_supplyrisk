@@ -1,0 +1,31 @@
+country,production,latitude,longitude,status
+United States,10961.78913,37.09,-95.71,active
+Saudi Arabia,10425.13699,23.89,45.08,active
+Russia,10758.66027,61.52,105.31,disrupted
+Canada,4263.947945,56.13,-106.34,active
+Iraq,4612.69589,33.22,43.68,disrupted
+Iran,4253.643836,32.43,53.69,disrupted
+China,3772.876712,35.86,104.19,active
+UAE,3216.479452,23.42,53.85,active
+Brazil,2586.539726,-14.24,-51.93,active
+Kuwait,2807.041096,29.31,47.48,active
+Mexico,1851.775342,23.63,-102.55,active
+Nigeria,1989.232877,9.08,8.67,disrupted
+Kazakhstan,1856.227397,48.02,66.92,active
+Qatar,1464.2191779999998,25.35,51.18,active
+Norway,1516.652055,60.47,8.47,active
+Angola,1593.0410960000002,-11.2,17.87,active
+Algeria,1258.657534,28.03,1.66,active
+Venezuela,1483.841096,6.42,-66.59,disrupted
+U.K.,1109.54943,55.38,-3.44,active
+Libya,1038.9589039999998,26.33,17.23,disrupted
+Oman,986.5424658,21.51,55.92,active
+Colombia,882.6575342,4.57,-74.3,active
+Indonesia,872.2301369999999,-0.79,113.92,active
+Azerbaijan,802.4739726,40.14,47.58,active
+Malaysia,736.2821918,4.21,108.96,active
+Egypt,668.972863,26.82,30.8,active
+Argentina,663.9205479,-38.42,-63.62,active
+Sudan,95.775,12.86,30.22,disrupted
+Syria,30.0,34.8,38.99,disrupted
+Yemen,16.0,15.55,48.52,disrupted

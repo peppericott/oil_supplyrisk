@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Oil Supply Risk Monitor</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      background: #ffffff;
+      color: #111;
+    }
+
+    .masthead {
+      border-bottom: 4px double #111;
+      padding: 16px 32px 12px;
+      text-align: center;
+    }
+
+    .masthead-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    .masthead h1 {
+      font-size: 48px;
+      font-weight: bold;
+      letter-spacing: -0.01em;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .masthead-sub {
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #555;
+      border-top: 1px solid #111;
+      border-bottom: 1px solid #111;
+      padding: 4px 0;
+      margin-top: 8px;
+    }
+
+    nav {
+      border-bottom: 1px solid #111;
+      padding: 0 32px;
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      height: 40px;
+      align-items: center;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: #111;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    nav a:hover, nav a.active { border-bottom: 2px solid #111; }
+
+    .page { display: none; }
+    .page.active { display: block; }
+    #page-map.active { display: flex; }
+
+    #page-intro {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 40px 32px;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: #111;
+      border: 1px solid #111;
+      margin-bottom: 40px;
+    }
+
+    .stat-box { background: #fff; padding: 20px; text-align: center; }
+    .stat-num { font-size: 36px; font-weight: bold; display: block; }
+    .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #666; margin-top: 4px; }
+
+    .intro-grid {
+      display: grid;
+      grid-template-columns: 2fr 1px 1fr;
+      gap: 32px;
+      margin-bottom: 40px;
+    }
+
+    .intro-divider { background: #111; width: 1px; }
+
+    .intro-lead h2 { font-size: 32px; font-weight: normal; line-height: 1.2; margin-bottom: 16px; }
+    .intro-lead p { font-size: 15px; line-height: 1.8; color: #222; margin-bottom: 12px; }
+
+    .intro-lead .dropcap::first-letter {
+      font-size: 52px;
+      font-weight: bold;
+      float: left;
+      line-height: 0.8;
+      margin-right: 6px;
+      margin-top: 4px;
+    }
+
+    .intro-sidebar h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      border-bottom: 2px solid #111;
+      padding-bottom: 6px;
+      margin-bottom: 16px;
+    }
+
+    .factor-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+      font-size: 13px;
+    }
+
+    .factor-row span { font-weight: bold; }
+
+    .section-rule { border: none; border-top: 3px double #111; margin: 32px 0 24px; }
+    .section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: #555; margin-bottom: 12px; }
+
+    .btn {
+      display: inline-block;
+      margin-top: 24px;
+      padding: 8px 20px;
+      border: 1px solid #111;
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 12px;
+      cursor: pointer;
+      background: #111;
+      color: #fff;
+      text-decoration: none;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .btn:hover { background: #333; }
+
+    #page-map { height: calc(100vh - 133px); }
+    #map { flex: 1; }
+
+    #sidebar {
+      width: 280px;
+      border-left: 1px solid #ddd;
+      padding: 24px;
+      overflow-y: auto;
+      background: #fff;
+    }
+
+    #sidebar h2 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #999;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #111;
+      padding-bottom: 8px;
+    }
+
+    #country-name { font-size: 24px; font-weight: normal; margin-bottom: 6px; }
+    #risk-score { font-size: 13px; color: #555; margin-bottom: 12px; }
+
+    #risk-level {
+      display: inline-block;
+      font-size: 11px;
+      padding: 3px 10px;
+      border: 1px solid #111;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    #reasons { list-style: none; border-top: 1px solid #eee; padding-top: 16px; }
+    #reasons li { font-size: 13px; color: #333; padding: 7px 0; border-bottom: 1px solid #f0f0f0; }
+    #production-info { font-size: 13px; color: #555; margin-top: 16px; padding-top: 16px; border-top: 1px solid #eee; }
+    #placeholder { font-size: 13px; color: #bbb; margin-top: 20px; line-height: 1.7; }
+
+    .legend {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      background: white;
+      border: 1px solid #111;
+      padding: 12px 16px;
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 12px;
+      z-index: 1000;
+      line-height: 2;
+    }
+
+    .legend-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid #111; padding-bottom: 4px; margin-bottom: 6px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; }
+    .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+    #page-rankings { max-width: 900px; margin: 0 auto; padding: 40px 32px; }
+    #page-news { max-width: 900px; margin: 0 auto; padding: 40px 32px; }
+
+    .page-head { border-bottom: 4px double #111; padding-bottom: 12px; margin-bottom: 32px; }
+    .page-head h1 { font-size: 36px; font-weight: normal; }
+    .page-head p { font-size: 13px; color: #666; margin-top: 4px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    thead tr { border-bottom: 2px solid #111; }
+    thead th { text-align: left; padding: 10px 0; font-weight: normal; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #555; }
+    tbody tr { border-bottom: 1px solid #eee; }
+    tbody tr:hover { background: #fafafa; }
+    tbody td { padding: 12px 0; }
+    .rank-num { color: #bbb; width: 40px; }
+
+    .risk-badge { display: inline-block; font-size: 10px; padding: 2px 8px; border: 1px solid; text-transform: uppercase; letter-spacing: 0.06em; }
+    .badge-critical { border-color: #c0392b; color: #c0392b; }
+    .badge-high { border-color: #e67e22; color: #e67e22; }
+    .badge-medium { border-color: #b7950b; color: #b7950b; }
+    .badge-low { border-color: #27ae60; color: #27ae60; }
+
+    /* NEWS */
+    .news-card {
+      border-bottom: 1px solid #ddd;
+      padding: 24px 0;
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .news-card:last-child { border-bottom: none; }
+
+    .news-card img {
+      width: 160px;
+      height: 100px;
+      object-fit: cover;
+      display: block;
+      border: 1px solid #eee;
+    }
+
+    .news-card-placeholder {
+      width: 160px;
+      height: 100px;
+      background: #f5f5f5;
+      border: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #bbb;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .news-tag { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: #c0392b; margin-bottom: 6px; font-weight: bold; }
+    .news-tag.high { color: #e67e22; }
+    .news-tag.medium { color: #b7950b; }
+
+    .news-title { font-size: 18px; font-weight: bold; margin-bottom: 8px; line-height: 1.25; }
+    .news-body { font-size: 13px; color: #444; line-height: 1.7; margin-bottom: 10px; }
+
+    .news-meta { display: flex; gap: 16px; align-items: center; }
+    .news-source { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #999; }
+
+    .read-more {
+      font-size: 12px;
+      color: #111;
+      text-decoration: none;
+      border-bottom: 1px solid #111;
+      letter-spacing: 0.04em;
+    }
+
+    .read-more:hover { color: #555; border-color: #555; }
+    #news-loading { font-size: 13px; color: #bbb; padding: 20px 0; }
+  </style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="masthead-top">
+    <span></span>
+    <span id="today-date"></span>
+    <span></span>
+  </div>
+  <h1>The Oil Supply Risk Monitor</h1>
+  <div class="masthead-sub">Crude Oil Supply Chain Analysis</div>
+</div>
+
+<nav>
+  <a href="#" class="nav-link active" data-page="intro">Overview</a>
+  <a href="#" class="nav-link" data-page="map">Map</a>
+  <a href="#" class="nav-link" data-page="rankings">Rankings</a>
+  <a href="#" class="nav-link" data-page="news">News & Alerts</a>
+</nav>
+
+<!-- INTRO -->
+<div id="page-intro" class="page active">
+  <div class="stats-row">
+    <div class="stat-box"><span class="stat-num">30</span><div class="stat-label">Countries Monitored</div></div>
+    <div class="stat-box"><span class="stat-num" id="stat-critical">—</span><div class="stat-label">Critical Risk</div></div>
+    <div class="stat-box"><span class="stat-num" id="stat-high">—</span><div class="stat-label">High Risk</div></div>
+    <div class="stat-box"><span class="stat-num" id="stat-disrupted">—</span><div class="stat-label">Disrupted</div></div>
+  </div>
+
+  <div class="intro-grid">
+    <div class="intro-lead">
+      <h2>Geopolitical Volatility Reshapes Global Oil Supply Chains</h2>
+      <p class="dropcap">The global oil market faces its most complex risk environment in decades. From the Strait of Hormuz to the Red Sea, critical chokepoints that carry a significant share of world oil supply are under unprecedented threat from state and non-state actors alike.</p>
+      <p>This monitor tracks crude oil production across 30 major producing nations and assesses geopolitical risk based on current conflict conditions, sanctions regimes, and supply chain disruptions as of 2024–25.</p>
+      <p>Risk scores are computed using a multi-factor model that weighs proximity to conflict zones, international sanctions exposure, pipeline disruption status, and strategic chokepoint vulnerability.</p>
+      <a href="#" class="btn nav-link" data-page="map">View Live Map →</a>
+    </div>
+    <div class="intro-divider"></div>
+    <div class="intro-sidebar">
+      <h3>Risk Scoring Methodology</h3>
+      <div class="factor-row">Strait of Hormuz proximity <span>+4</span></div>
+      <div class="factor-row">Active conflict zone <span>+5</span></div>
+      <div class="factor-row">Houthi / Red Sea threat <span>+3</span></div>
+      <div class="factor-row">International sanctions <span>+3</span></div>
+      <div class="factor-row">Low production capacity <span>+2</span></div>
+      <div class="factor-row">Operational disruption <span>+2</span></div>
+      <div class="factor-row" style="border:none; margin-top:8px; font-size:12px; color:#999;">Max score: 17</div>
+    </div>
+  </div>
+
+  <hr class="section-rule"/>
+  <p class="section-label">Data Sources</p>
+  <p style="font-size:13px; color:#555; line-height:1.7;">Production data sourced from Kaggle crude oil production dataset (2018 figures). Risk assessments reflect 2024–25 geopolitical conditions based on open-source intelligence including UCDP conflict data, UN sanctions records, and shipping disruption reports.</p>
+</div>
+
+<!-- MAP -->
+<div id="page-map" class="page">
+  <div id="map"></div>
+  <div id="sidebar">
+    <h2>Country Detail</h2>
+    <p id="placeholder">Click a marker on the map to view risk details for that country.</p>
+    <div id="detail" style="display:none">
+      <div id="country-name"></div>
+      <div id="risk-score"></div>
+      <div id="risk-level"></div>
+      <ul id="reasons"></ul>
+      <div id="production-info"></div>
+    </div>
+  </div>
+  <div class="legend">
+    <div class="legend-title">Risk Level</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#c0392b"></div> Critical (10+)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#e67e22"></div> High (7–9)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#d4ac0d"></div> Medium (4–6)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#27ae60"></div> Low (0–3)</div>
+  </div>
+</div>
+
+<!-- RANKINGS -->
+<div id="page-rankings" class="page">
+  <div class="page-head">
+    <h1>Country Risk Rankings</h1>
+    <p>Sorted by risk score, highest to lowest · 2024–25 Assessment</p>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th class="rank-num">#</th>
+        <th>Country</th>
+        <th>Risk Score</th>
+        <th>Risk Level</th>
+        <th>2018 Production</th>
+      </tr>
+    </thead>
+    <tbody id="rankings-body">
+      <tr><td colspan="5" style="color:#bbb; padding:20px 0; font-size:13px;">Loading data...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- NEWS -->
+<div id="page-news" class="page">
+  <div class="page-head">
+    <h1>Risk Alerts & Field Reports</h1>
+    <p>Latest news from Reuters, AP News & The Guardian · March 2026</p>
+  </div>
+  <div id="news-loading">Loading latest news...</div>
+  <div id="news-container"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  document.getElementById('today-date').textContent =
+    new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  let mapInitialized = false;
+  let allData = [];
+
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const target = this.dataset.page;
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+      document.getElementById('page-' + target).classList.add('active');
+      document.querySelectorAll('[data-page="' + target + '"]').forEach(l => l.classList.add('active'));
+      if (target === 'map' && !mapInitialized) { initMap(); mapInitialized = true; }
+      if (target === 'rankings' && allData.length > 0) renderRankings(allData);
+      if (target === 'news') loadNews();
+    });
+  });
+
+  fetch('http://127.0.0.1:8000/live-data')
+    .then(res => res.json())
+    .then(data => {
+      allData = data;
+      document.getElementById('stat-critical').textContent = data.filter(d => d.risk_level === 'Critical').length;
+      document.getElementById('stat-high').textContent = data.filter(d => d.risk_level === 'High').length;
+      document.getElementById('stat-disrupted').textContent = data.filter(d => d.status === 'disrupted').length;
+    })
+    .catch(err => console.error('Fetch error:', err));
+
+  const realNews = [
+    {
+      tag: "Critical — Oil Markets",
+      tagClass: "",
+      title: "Oil Rises for Fourth Day on Supply Cuts and Widening Middle East Conflict",
+      body: "Brent crude futures climbed as OPEC+ supply cuts combine with escalating Middle East tensions to tighten global oil markets. Analysts warn prices could push higher if Strait of Hormuz disruptions persist.",
+      source: "Reuters",
+      date: "31 March 2026",
+      url: "https://www.reuters.com/business/energy/oil-rises-fourth-day-supply-cuts-widening-middle-east-conflict-2026-03-31/",
+      img: ""
+    },
+    {
+      tag: "Critical — Iran",
+      tagClass: "",
+      title: "Iran-US Standoff Deepens Amid Fresh Diplomatic Tensions",
+      body: "Escalating confrontations between Iran and the United States are raising fears of a wider conflict that could further disrupt Persian Gulf oil flows, already strained by months of geopolitical pressure.",
+      source: "AP News",
+      date: "31 March 2026",
+      url: "https://apnews.com/article/iran-us-israel-trump-lebanon-march-31-2026-07fcd5216ceae44965de79a60a4623da",
+      img: ""
+    },
+    {
+      tag: "Critical — Strait of Hormuz",
+      tagClass: "",
+      title: "PetroChina Says Operations Normal as Strait of Hormuz Handles 10% of Its Supply",
+      body: "PetroChina confirmed its operations remain broadly unaffected despite Strait of Hormuz tensions, though the strait accounts for approximately 10% of its total oil supply — a significant vulnerability if tensions escalate further.",
+      source: "Reuters",
+      date: "30 March 2026",
+      url: "https://www.reuters.com/business/energy/petrochina-says-operations-overall-normal-strait-hormuz-accounts-about-10-its-2026-03-30/",
+      img: ""
+    },
+    {
+      tag: "High Risk — Malaysia / Iran",
+      tagClass: "high",
+      title: "Malaysian Vessels Permitted Through Strait of Hormuz After Talks with Iran",
+      body: "Malaysia's prime minister confirmed that Iranian authorities have permitted Malaysian-flagged vessels to transit the Strait of Hormuz following direct diplomatic negotiations, offering a rare diplomatic opening amid the ongoing regional crisis.",
+      source: "The Guardian",
+      date: "27 March 2026",
+      url: "https://www.theguardian.com/world/2026/mar/27/malaysian-vessels-permitted-to-travel-through-strait-of-hormuz-countrys-pm-says-after-talks-with-iran",
+      img: ""
+    }
+  ];
+
+  let newsLoaded = false;
+
+  function loadNews() {
+    if (newsLoaded) return;
+    newsLoaded = true;
+    document.getElementById('news-loading').style.display = 'none';
+    const container = document.getElementById('news-container');
+    container.innerHTML = '';
+    realNews.forEach(article => {
+      const card = document.createElement('div');
+      card.className = 'news-card';
+      const imgHTML = article.img
+        ? `<img src="${article.img}" alt="" onerror="this.outerHTML='<div class=\\'news-card-placeholder\\'>No Image</div>'">`
+        : `<div class="news-card-placeholder">No Image</div>`;
+      card.innerHTML = `
+        ${imgHTML}
+        <div class="news-card-content">
+          <div class="news-tag ${article.tagClass}">${article.tag}</div>
+          <div class="news-title">${article.title}</div>
+          <div class="news-body">${article.body}</div>
+          <div class="news-meta">
+            <span class="news-source">${article.source} · ${article.date}</span>
+            <a href="${article.url}" target="_blank" class="read-more">Read full article →</a>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function riskColor(level) {
+    if (level === 'Critical') return '#c0392b';
+    if (level === 'High') return '#e67e22';
+    if (level === 'Medium') return '#d4ac0d';
+    return '#27ae60';
+  }
+
+  function initMap() {
+    const map = L.map('map', { center: [20, 10], zoom: 2 });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '© OpenStreetMap © CARTO',
+      maxZoom: 18
+    }).addTo(map);
+
+    fetch('http://127.0.0.1:8000/live-data')
+      .then(res => res.json())
+      .then(data => {
+        allData = data;
+        data.forEach(item => {
+          if (!item.latitude || !item.longitude) return;
+          const color = riskColor(item.risk_level);
+          const marker = L.circleMarker([item.latitude, item.longitude], {
+            radius: 8,
+            fillColor: color,
+            color: '#fff',
+            weight: 1.5,
+            fillOpacity: 0.9
+          }).addTo(map);
+
+          marker.on('click', () => {
+            document.getElementById('placeholder').style.display = 'none';
+            document.getElementById('detail').style.display = 'block';
+            document.getElementById('country-name').textContent = item.country;
+            document.getElementById('risk-score').textContent = 'Risk Score: ' + item.risk + ' / 17';
+            const rl = document.getElementById('risk-level');
+            rl.textContent = item.risk_level || 'Low';
+            rl.style.borderColor = color;
+            rl.style.color = color;
+            document.getElementById('production-info').textContent =
+              '2018 Production: ' + parseFloat(item.production).toFixed(0) + 'k bbl/day';
+            const reasonsList = document.getElementById('reasons');
+            reasonsList.innerHTML = '';
+            const reasons = Array.isArray(item.ai_reason) ? item.ai_reason : [item.ai_reason];
+            reasons.forEach(r => {
+              const li = document.createElement('li');
+              li.textContent = r;
+              reasonsList.appendChild(li);
+            });
+          });
+        });
+        renderRankings(data);
+      });
+  }
+
+  function renderRankings(data) {
+    const sorted = [...data].sort((a, b) => b.risk - a.risk);
+    const tbody = document.getElementById('rankings-body');
+    tbody.innerHTML = '';
+    sorted.forEach((item, i) => {
+      const level = item.risk_level || 'Low';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="rank-num">${i + 1}</td>
+        <td>${item.country}</td>
+        <td>${item.risk} / 17</td>
+        <td><span class="risk-badge badge-${level.toLowerCase()}">${level}</span></td>
+        <td>${parseFloat(item.production).toFixed(0)}k bbl/day</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+</script>
+</body>
+</html>
