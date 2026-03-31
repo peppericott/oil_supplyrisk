@@ -417,7 +417,7 @@
     });
   });
 
-  fetch('http://127.0.0.1:8000/live-data')
+  fetch('https://oil-supplyrisk.onrender.com/live-data')
     .then(res => res.json())
     .then(data => {
       allData = data;
@@ -514,7 +514,7 @@
       maxZoom: 18
     }).addTo(map);
 
-    fetch('http://127.0.0.1:8000/live-data')
+    fetch('https://oil-supplyrisk.onrender.com/live-data')
       .then(res => res.json())
       .then(data => {
         allData = data;
