@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
+import os
 from utils import calculate_risk, to_geojson
 from datetime import datetime
 
@@ -14,9 +15,11 @@ app.add_middleware(
 )
 
 def load_data():
-    df = pd.read_csv("data.csv")
-    df.columns = df.columns.str.lower()
-    return df
+   BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+   file_path = os.path.join(BASE_DIR, "data.csv")
+   df = pd.read_csv(file_path)
+   df.columns = df.columns.str.lower()
+   return df
 
 @app.get("/")
 def home():
@@ -35,7 +38,7 @@ def live_data():
         risk, reasons = calculate_risk(row)
         item = row.to_dict()
         item["risk"] = risk
-        item["ai_reason"] = reasons[:-1]
+        item["ai_reason"] = str(reasons)
 
         if risk >= 10:
             item["risk_level"] = "Critical"
