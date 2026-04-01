@@ -14,7 +14,7 @@ app.add_middleware(
 )
 
 def load_data():
-    df = pd.read_csv("data/data.csv")
+    df = pd.read_csv("data.csv")
     df.columns = df.columns.str.lower()
     return df
 
